@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charts Demo</title>
+</head>
+
+<body>
+    <div>
+        <canvas id="power-meter"></canvas>
+    </div>
+
+    <label>
+        Number of samples
+        <input type="number" id="samples" value="10" min="10" max="8640" step="1">
+    </label>
+    <br>
+    <label>
+        Moving average sample
+        <input type="number" id="moving-avarage" value="1" min="1" max="864" step="1">
+    </label>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+
+        const labels = [];
+        const arr = [];
+        const arrMean = []
+        let data = {};
+        let n = 0;
+
+        //define data set
+        do {
+            labels.push(`${toTime(n * 10)}`);
+            arr.push({
+                x: labels[n], y: Number((Math.random() * 10) + 20).toFixed(2)
+            });
+            n++;
+        } while (n < 8640)
+
+        //define moving average
+
+        document.getElementById("samples").addEventListener('change', updateChart)
+        document.getElementById("moving-avarage").addEventListener('change', updateChart)
+
+        function updateChart() {
+            const nSamples = Number(document.getElementById("samples").value);
+            const mAverage = Number(document.getElementById("moving-avarage").value);
+
+            for (let i = 0; i < arr.length; i += mAverage) {
+                arrMean.push({
+                    x: labels[i], y: arr.slice(i, i + mAverage).reduce((prev, curr) => prev + Number(curr['y']), 0) / mAverage
+                });
+            }
+
+            chart.data = {
+                datasets: [{
+                    label: 'Voltage',
+                    backgroundColor: 'rgb(255, 99, 132)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: arr.slice(0, nSamples),
+                    cubicInterpolationMode: 'monotone',
+                },
+                {
+                    label: 'Moving average',
+                    backgroundColor: 'rgb(200, 150, 100)',
+                    borderColor: 'rgb(200, 150, 100)',
+                    data: arrMean.filter((e, i) => (i % mAverage) === 0).slice(0, nSamples / mAverage),
+                    cubicInterpolationMode: 'monotone',
+                }]
+            };
+            chart.update();
+        }
+
+        const config = {
+            type: 'line',
+            data: data,
+            options: {}
+        };
+
+        function toTime(seconds) {
+            var date = new Date(null);
+            date.setSeconds(seconds);
+            return date.toISOString().substr(11, 8);
+        }
+
+        const chart = new Chart(
+            document.getElementById('power-meter'),
+            config
+        );
+
+    </script>
+</body>
+
+</html>
